@@ -165,7 +165,8 @@ class WebBaseLoader(BaseLoader):
         """Fetch all urls, then return soups for all results."""
         from bs4 import BeautifulSoup
 
-        results = asyncio.run(self.fetch_all(urls))
+        loop = asyncio.get_event_loop()
+        results = loop.run_until_complete(self.fetch_all(urls))
         final_results = []
         for i, result in enumerate(results):
             url = urls[i]
