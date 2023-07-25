@@ -164,9 +164,17 @@ class WebBaseLoader(BaseLoader):
     def scrape_all(self, urls: List[str], parser: Union[str, None] = None) -> List[Any]:
         """Fetch all urls, then return soups for all results."""
         from bs4 import BeautifulSoup
+        try:
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
 
-        loop = asyncio.get_event_loop()
-        results = loop.run_until_complete(self.fetch_all(urls))
+        task = loop.create_task(self.fetch_all(urls))
+        if not loop.is_running():
+            results = loop.run_until_complete(task)
+        else:
+            results = asyncio.run_coroutine_threadsafe(task, loop=loop).result()
         final_results = []
         for i, result in enumerate(results):
             url = urls[i]
