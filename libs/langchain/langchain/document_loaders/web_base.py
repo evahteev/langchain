@@ -135,6 +135,14 @@ class WebBaseLoader(BaseLoader):
         async with semaphore:
             return await self._fetch(url)
 
+    def fetch_all_sync(self, urls: List[str]) -> Any:
+        results = []
+        for url in urls:
+            response = requests.get(url, headers=self.session.headers, verify=None if self.session.verify
+            else False)
+            results.append(response.text)
+        return results
+
     async def fetch_all(self, urls: List[str]) -> Any:
         """Fetch all urls concurrently with rate limiting."""
         semaphore = asyncio.Semaphore(self.requests_per_second)
@@ -164,16 +172,8 @@ class WebBaseLoader(BaseLoader):
     def scrape_all(self, urls: List[str], parser: Union[str, None] = None) -> List[Any]:
         """Fetch all urls, then return soups for all results."""
         from bs4 import BeautifulSoup
-        import nest_asyncio
-        nest_asyncio.apply()
 
-        try:
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-
-        results = loop.run_until_complete(self.fetch_all(urls))
+        results = self.fetch_all_sync(urls)
         final_results = []
         for i, result in enumerate(results):
             url = urls[i]
