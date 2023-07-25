@@ -170,11 +170,7 @@ class WebBaseLoader(BaseLoader):
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
 
-        task = loop.create_task(self.fetch_all(urls))
-        if not loop.is_running():
-            results = loop.run_until_complete(task)
-        else:
-            results = asyncio.run_coroutine_threadsafe(task, loop=loop).result()
+        results = loop.run_in_executor(None, self.fetch_all, urls)
         final_results = []
         for i, result in enumerate(results):
             url = urls[i]
